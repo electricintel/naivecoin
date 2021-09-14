@@ -1,0 +1,792 @@
+From: <Saved by Blink>
+Snapshot-Content-Location: https://lhartikk.github.io/jekyll/update/2017/07/10/chapter5.html
+Subject: #5: Transaction relaying
+Date: Tue, 14 Sep 2021 14:36:17 -0000
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	type="text/html";
+	boundary="----MultipartBoundary--p1ehiEZvhBYolA2q3JZz8IrpGH3gy0ZWVQAZw0Hu3A----"
+
+
+------MultipartBoundary--p1ehiEZvhBYolA2q3JZz8IrpGH3gy0ZWVQAZw0Hu3A----
+Content-Type: text/html
+Content-ID: <frame-54B697BAE8670CDDC0F32A1D4D2A2F2C@mhtml.blink>
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://lhartikk.github.io/jekyll/update/2017/07/10/chapter5.html
+
+<!DOCTYPE html><html lang=3D"en"><head><meta http-equiv=3D"Content-Type" co=
+ntent=3D"text/html; charset=3DUTF-8">
+ =20
+  <meta http-equiv=3D"X-UA-Compatible" content=3D"IE=3Dedge">
+  <meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=3D=
+1">
+
+  <title>#5: Transaction relaying</title>
+  <meta name=3D"description" content=3D"Overview In this chapter we will im=
+plement the relaying of such transactions, that are not yet included in the=
+ blockchain. In bitcoin, these transaction are ...">
+  <meta property=3D"og:title" content=3D"Naivecoin: a tutorial for building=
+ a cryptocurrency">
+  <meta property=3D"og:image" content=3D"http://lhartikk.github.io/assets/b=
+lockchain.png">
+  <link rel=3D"stylesheet" href=3D"https://lhartikk.github.io/assets/main.c=
+ss">
+  <link rel=3D"canonical" href=3D"https://lhartikk.github.io/jekyll/update/=
+2017/07/10/chapter5.html">
+  <link rel=3D"alternate" type=3D"application/rss+xml" title=3D"Naivecoin: =
+a tutorial for building a cryptocurrency" href=3D"https://lhartikk.github.i=
+o/feed.xml">
+ =20
+<!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+</head>
+
+
+  <body>
+
+    <header class=3D"site-header" role=3D"banner">
+
+  <div class=3D"wrapper">
+   =20
+   =20
+    <a class=3D"site-title" href=3D"https://lhartikk.github.io/">Naivecoin:=
+ a tutorial for building a cryptocurrency</a>
+ =20
+   =20
+      <nav class=3D"site-nav">
+        <input type=3D"checkbox" id=3D"nav-trigger" class=3D"nav-trigger">
+        <label for=3D"nav-trigger">
+          <span class=3D"menu-icon">
+            <svg viewBox=3D"0 0 18 15" width=3D"18px" height=3D"15px">
+              <path fill=3D"#424242" d=3D"M18,1.484c0,0.82-0.665,1.484-1.48=
+4,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.0=
+31C17.335,0,18,0.665,18,1.484L18,1.484z"></path>
+              <path fill=3D"#424242" d=3D"M18,7.516C18,8.335,17.335,9,16.51=
+6,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.03=
+1C17.335,6.031,18,6.696,18,7.516L18,7.516z"></path>
+              <path fill=3D"#424242" d=3D"M18,13.516C18,14.335,17.335,15,16=
+.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.48=
+4h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"></path>
+            </svg>
+          </span>
+        </label>
+
+        <div class=3D"trigger">
+         =20
+           =20
+           =20
+         =20
+           =20
+           =20
+            <a class=3D"page-link" href=3D"https://lhartikk.github.io/about=
+/">About</a>
+           =20
+         =20
+           =20
+           =20
+         =20
+           =20
+           =20
+         =20
+           =20
+           =20
+         =20
+        </div>
+      </nav>
+   =20
+  </div>
+</header>
+
+
+    <main class=3D"page-content" aria-label=3D"Content">
+      <div class=3D"wrapper">
+        <article class=3D"post" itemscope=3D"" itemtype=3D"http://schema.or=
+g/BlogPosting">
+
+  <header class=3D"post-header">
+    <h1 class=3D"post-title" itemprop=3D"name headline">#5: Transaction rel=
+aying</h1>
+  </header>
+
+  <div class=3D"post-content" itemprop=3D"articleBody">
+    <h3 id=3D"overview">Overview</h3>
+<p>In this chapter we will implement the relaying of such transactions, tha=
+t are not yet included in the blockchain. In bitcoin, these transaction are=
+ also known as =E2=80=9Cunconfirmed transactions=E2=80=9D. Typically, when =
+someone wants to include a transaction to the blockchain (=3D send coins to=
+ some address ) he broadcasts the transaction to the network and hopefully =
+some node will mine the transaction to the blockchain.</p>
+
+<p>This feature is very important for a working cryptocurrency, since it me=
+ans you don=E2=80=99t need to mine a block yourself, in order to include a =
+transaction to the blockchain.</p>
+
+<p>As a consequence, the nodes will now share two types of data when they c=
+ommunicate with each other:</p>
+<ul>
+  <li>the state of the blockchain ( =3Dthe blocks and transactions that are=
+ included to the blockchain)</li>
+  <li>unconfirmed transactions ( =3Dthe transactions that are not yet inclu=
+ded in the blockchain)</li>
+</ul>
+
+<p>The full code that will be implemented in this chapter can be found <a h=
+ref=3D"https://github.com/lhartikk/naivecoin/tree/chapter5">here</a>.</p>
+
+<h3 id=3D"transaction-pool">Transaction pool</h3>
+<p>We will store our unconfirmed transactions in a new entity called =E2=80=
+=9Ctransaction pool=E2=80=9D (also known as =E2=80=9Cmempool=E2=80=9D in bi=
+tcoin). Transaction pool is a structure that contains all of the =E2=80=9Cu=
+nconfirmed transactions=E2=80=9D our node know of. In this simple implement=
+ation we will just use a list.</p>
+
+<figure class=3D"highlight"><pre><code class=3D"language-ts" data-lang=3D"t=
+s"><span></span><span class=3D"kd">let</span> <span class=3D"nx">transactio=
+nPool</span>: <span class=3D"kt">Transaction</span><span class=3D"p">[]</sp=
+an> <span class=3D"o">=3D</span> <span class=3D"p">[];</span></code></pre><=
+/figure>
+
+<p>We will also introduce a new endpoint to our node: <code>POST /sendTrans=
+action</code>. This method creates the a transaction to our local transacti=
+on pool based on the existing wallet functionality. For now on we will use =
+this method as the =E2=80=9Cpreferred=E2=80=9D interface when we want to in=
+clude a new transaction to the blockchain.</p>
+
+<figure class=3D"highlight"><pre><code class=3D"language-ts" data-lang=3D"t=
+s"><span></span>    <span class=3D"nx">app</span><span class=3D"p">.</span>=
+<span class=3D"nx">post</span><span class=3D"p">(</span><span class=3D"s1">=
+'/sendTransaction'</span><span class=3D"p">,</span> <span class=3D"p">(</sp=
+an><span class=3D"nx">req</span><span class=3D"p">,</span> <span class=3D"n=
+x">res</span><span class=3D"p">)</span> <span class=3D"o">=3D&gt;</span> <s=
+pan class=3D"p">{</span>
+        <span class=3D"p">...</span>
+    <span class=3D"p">})</span></code></pre></figure>
+
+<p>We create the transaction just like we did in <a href=3D"https://lhartik=
+k.github.io/jekyll/update/2017/07/11/chapter4.html">chapter4</a>. We just a=
+dd the created transaction to the pool instead of instantly trying to mine =
+a block:</p>
+
+<figure class=3D"highlight"><pre><code class=3D"language-ts" data-lang=3D"t=
+s"><span></span><span class=3D"kr">const</span> <span class=3D"nx">sendTran=
+saction</span> <span class=3D"o">=3D</span> <span class=3D"p">(</span><span=
+ class=3D"nx">address</span>: <span class=3D"kt">string</span><span class=
+=3D"p">,</span> <span class=3D"nx">amount</span>: <span class=3D"kt">number=
+</span><span class=3D"p">)</span><span class=3D"o">:</span> <span class=3D"=
+nx">Transaction</span> <span class=3D"o">=3D&gt;</span> <span class=3D"p">{=
+</span>
+    <span class=3D"kr">const</span> <span class=3D"nx">tx</span>: <span cla=
+ss=3D"kt">Transaction</span> <span class=3D"o">=3D</span> <span class=3D"nx=
+">createTransaction</span><span class=3D"p">(</span><span class=3D"nx">addr=
+ess</span><span class=3D"p">,</span> <span class=3D"nx">amount</span><span =
+class=3D"p">,</span> <span class=3D"nx">getPrivateFromWallet</span><span cl=
+ass=3D"p">(),</span> <span class=3D"nx">getUnspentTxOuts</span><span class=
+=3D"p">(),</span> <span class=3D"nx">getTransactionPool</span><span class=
+=3D"p">());</span>
+    <span class=3D"nx">addToTransactionPool</span><span class=3D"p">(</span=
+><span class=3D"nx">tx</span><span class=3D"p">,</span> <span class=3D"nx">=
+getUnspentTxOuts</span><span class=3D"p">());</span>
+    <span class=3D"k">return</span> <span class=3D"nx">tx</span><span class=
+=3D"p">;</span>
+<span class=3D"p">};</span></code></pre></figure>
+
+<h3 id=3D"broadcasting">Broadcasting</h3>
+<p>The whole point of the unconfirmed transactions are that they will sprea=
+d throughout the network and eventually <em>some</em> node will mine the tr=
+ansaction to the blockchain. To handle this we will introduce the following=
+ simple rules for the networking of unconfirmed transactions:</p>
+
+<ul>
+  <li>When a node receives an unconfirmed transaction it has not seen befor=
+e, it will broadcast the full transaction pool to all peers.</li>
+  <li>When a node first connects to another node, it will query for the tra=
+nsaction pool of that node.</li>
+</ul>
+
+<p>We will add two new MessageTypes to serve this purpose: <code>QUERY_TRAN=
+SACTION_POOL</code> and <code>RESPONSE_TRANSACTION_POOL</code>. The Message=
+Type enum will now look now like this:</p>
+
+<figure class=3D"highlight"><pre><code class=3D"language-ts" data-lang=3D"t=
+s"><span></span><span class=3D"kr">enum</span> <span class=3D"nx">MessageTy=
+pe</span> <span class=3D"p">{</span>
+    <span class=3D"nx">QUERY_LATEST</span> <span class=3D"o">=3D</span> <sp=
+an class=3D"mi">0</span><span class=3D"p">,</span>
+    <span class=3D"nx">QUERY_ALL</span> <span class=3D"o">=3D</span> <span =
+class=3D"mi">1</span><span class=3D"p">,</span>
+    <span class=3D"nx">RESPONSE_BLOCKCHAIN</span> <span class=3D"o">=3D</sp=
+an> <span class=3D"mi">2</span><span class=3D"p">,</span>
+    <span class=3D"nx">QUERY_TRANSACTION_POOL</span> <span class=3D"o">=3D<=
+/span> <span class=3D"mi">3</span><span class=3D"p">,</span>
+    <span class=3D"nx">RESPONSE_TRANSACTION_POOL</span> <span class=3D"o">=
+=3D</span> <span class=3D"mi">4</span>
+<span class=3D"p">}</span></code></pre></figure>
+
+<p>The transaction pool messages will be created in the following way:</p>
+
+<figure class=3D"highlight"><pre><code class=3D"language-ts" data-lang=3D"t=
+s"><span></span><span class=3D"kr">const</span> <span class=3D"nx">response=
+TransactionPoolMsg</span> <span class=3D"o">=3D</span> <span class=3D"p">()=
+</span><span class=3D"o">:</span> <span class=3D"nx">Message</span> <span c=
+lass=3D"o">=3D&gt;</span> <span class=3D"p">({</span>
+    <span class=3D"s1">'type'</span><span class=3D"o">:</span> <span class=
+=3D"nx">MessageType</span><span class=3D"p">.</span><span class=3D"nx">RESP=
+ONSE_TRANSACTION_POOL</span><span class=3D"p">,</span>
+    <span class=3D"s1">'data'</span><span class=3D"o">:</span> <span class=
+=3D"nx">JSON</span><span class=3D"p">.</span><span class=3D"nx">stringify</=
+span><span class=3D"p">(</span><span class=3D"nx">getTransactionPool</span>=
+<span class=3D"p">())</span>
+<span class=3D"p">});</span>=20
+
+<span class=3D"kr">const</span> <span class=3D"nx">queryTransactionPoolMsg<=
+/span> <span class=3D"o">=3D</span> <span class=3D"p">()</span><span class=
+=3D"o">:</span> <span class=3D"nx">Message</span> <span class=3D"o">=3D&gt;=
+</span> <span class=3D"p">({</span>
+    <span class=3D"s1">'type'</span><span class=3D"o">:</span> <span class=
+=3D"nx">MessageType</span><span class=3D"p">.</span><span class=3D"nx">QUER=
+Y_TRANSACTION_POOL</span><span class=3D"p">,</span>
+    <span class=3D"s1">'data'</span><span class=3D"o">:</span> <span class=
+=3D"kc">null</span>
+<span class=3D"p">});</span></code></pre></figure>
+
+<p>To implement the described transaction broadcasting logic, we add code t=
+o handle the <code>MessageType.RESPONSE_TRANSACTION_POOL</code> message typ=
+e. Whenever, we receive unconfirmed transactions, we try to add those to ou=
+r transaction pool. If we manage to add a transaction to our pool, it means=
+ that the transaction is valid and our node has not seen the transaction be=
+fore. In this case we broadcast our own transaction pool to all peers.</p>
+
+<figure class=3D"highlight"><pre><code class=3D"language-ts" data-lang=3D"t=
+s"><span></span><span class=3D"k">case</span> <span class=3D"nx">MessageTyp=
+e.RESPONSE_TRANSACTION_POOL</span>:
+    <span class=3D"kt">const</span> <span class=3D"nx">receivedTransactions=
+</span>: <span class=3D"kt">Transaction</span><span class=3D"p">[]</span> <=
+span class=3D"o">=3D</span> <span class=3D"nx">JSONToObject</span><span cla=
+ss=3D"o">&lt;</span><span class=3D"nx">Transaction</span><span class=3D"p">=
+[]</span><span class=3D"o">&gt;</span><span class=3D"p">(</span><span class=
+=3D"nx">message</span><span class=3D"p">.</span><span class=3D"nx">data</sp=
+an><span class=3D"p">);</span>
+    <span class=3D"nx">receivedTransactions</span><span class=3D"p">.</span=
+><span class=3D"nx">forEach</span><span class=3D"p">((</span><span class=3D=
+"nx">transaction</span>: <span class=3D"kt">Transaction</span><span class=
+=3D"p">)</span> <span class=3D"o">=3D&gt;</span> <span class=3D"p">{</span>
+        <span class=3D"k">try</span> <span class=3D"p">{</span>
+            <span class=3D"nx">handleReceivedTransaction</span><span class=
+=3D"p">(</span><span class=3D"nx">transaction</span><span class=3D"p">);</s=
+pan>
+            <span class=3D"c1">//if no error is thrown, transaction was ind=
+eed added to the pool</span>
+            <span class=3D"c1">//let's broadcast transaction pool</span>
+            <span class=3D"nx">broadCastTransactionPool</span><span class=
+=3D"p">();</span>
+        <span class=3D"p">}</span> <span class=3D"k">catch</span> <span cla=
+ss=3D"p">(</span><span class=3D"nx">e</span><span class=3D"p">)</span> <spa=
+n class=3D"p">{</span>
+            <span class=3D"c1">//unconfirmed transaction not valid (we prob=
+ably already have it in our pool)</span>
+        <span class=3D"p">}</span>
+    <span class=3D"p">});</span></code></pre></figure>
+
+<h3 id=3D"validating-received-unconfirmed-transactions">Validating received=
+ unconfirmed transactions</h3>
+<p>As the peers can send us any kind of transactions, we must validate the =
+transactions before we can add them to the transaction pool. All of the exi=
+sting transaction validation rules apply. For instance, the transaction mus=
+t be correctly formatted, and the transaction inputs, outputs and signature=
+s must match.</p>
+
+<p>In addition to the existing rules, we add a new rule: a transaction cann=
+ot be added to the pool if any of the transaction inputs are already found =
+in the existing transaction pool. This new rule is embodied in the followin=
+g code:</p>
+
+<figure class=3D"highlight"><pre><code class=3D"language-ts" data-lang=3D"t=
+s"><span></span><span class=3D"kr">const</span> <span class=3D"nx">isValidT=
+xForPool</span> <span class=3D"o">=3D</span> <span class=3D"p">(</span><spa=
+n class=3D"nx">tx</span>: <span class=3D"kt">Transaction</span><span class=
+=3D"p">,</span> <span class=3D"nx">aTtransactionPool</span>: <span class=3D=
+"kt">Transaction</span><span class=3D"p">[])</span><span class=3D"o">:</spa=
+n> <span class=3D"kr">boolean</span> <span class=3D"o">=3D&gt;</span> <span=
+ class=3D"p">{</span>
+    <span class=3D"kr">const</span> <span class=3D"nx">txPoolIns</span>: <s=
+pan class=3D"kt">TxIn</span><span class=3D"p">[]</span> <span class=3D"o">=
+=3D</span> <span class=3D"nx">getTxPoolIns</span><span class=3D"p">(</span>=
+<span class=3D"nx">aTtransactionPool</span><span class=3D"p">);</span>
+
+    <span class=3D"kr">const</span> <span class=3D"nx">containsTxIn</span> =
+<span class=3D"o">=3D</span> <span class=3D"p">(</span><span class=3D"nx">t=
+xIns</span>: <span class=3D"kt">TxIn</span><span class=3D"p">[],</span> <sp=
+an class=3D"nx">txIn</span>: <span class=3D"kt">TxIn</span><span class=3D"p=
+">)</span> <span class=3D"o">=3D&gt;</span> <span class=3D"p">{</span>
+        <span class=3D"k">return</span> <span class=3D"nx">_</span><span cl=
+ass=3D"p">.</span><span class=3D"nx">find</span><span class=3D"p">(</span><=
+span class=3D"nx">txPoolIns</span><span class=3D"p">,</span> <span class=3D=
+"p">(</span><span class=3D"nx">txPoolIn</span> <span class=3D"o">=3D&gt;</s=
+pan> <span class=3D"p">{</span>
+            <span class=3D"k">return</span> <span class=3D"nx">txIn</span><=
+span class=3D"p">.</span><span class=3D"nx">txOutIndex</span> <span class=
+=3D"o">=3D=3D=3D</span> <span class=3D"nx">txPoolIn</span><span class=3D"p"=
+>.</span><span class=3D"nx">txOutIndex</span> <span class=3D"o">&amp;&amp;<=
+/span> <span class=3D"nx">txIn</span><span class=3D"p">.</span><span class=
+=3D"nx">txOutId</span> <span class=3D"o">=3D=3D=3D</span> <span class=3D"nx=
+">txPoolIn</span><span class=3D"p">.</span><span class=3D"nx">txOutId</span=
+><span class=3D"p">;</span>
+        <span class=3D"p">}))</span>
+    <span class=3D"p">};</span>
+
+    <span class=3D"k">for</span> <span class=3D"p">(</span><span class=3D"k=
+r">const</span> <span class=3D"nx">txIn</span> <span class=3D"nx">of</span>=
+ <span class=3D"nx">tx</span><span class=3D"p">.</span><span class=3D"nx">t=
+xIns</span><span class=3D"p">)</span> <span class=3D"p">{</span>
+        <span class=3D"k">if</span> <span class=3D"p">(</span><span class=
+=3D"nx">containsTxIn</span><span class=3D"p">(</span><span class=3D"nx">txP=
+oolIns</span><span class=3D"p">,</span> <span class=3D"nx">txIn</span><span=
+ class=3D"p">))</span> <span class=3D"p">{</span>
+            <span class=3D"nx">console</span><span class=3D"p">.</span><spa=
+n class=3D"nx">log</span><span class=3D"p">(</span><span class=3D"s1">'txIn=
+ already found in the txPool'</span><span class=3D"p">);</span>
+            <span class=3D"k">return</span> <span class=3D"kc">false</span>=
+<span class=3D"p">;</span>
+        <span class=3D"p">}</span>
+    <span class=3D"p">}</span>
+    <span class=3D"k">return</span> <span class=3D"kc">true</span><span cla=
+ss=3D"p">;</span>
+<span class=3D"p">};</span></code></pre></figure>
+
+<p>There is no explicit way to remove a transaction from the transaction po=
+ol. The transaction pool will however be updated each time a new block is f=
+ound.</p>
+
+<h3 id=3D"from-transaction-pool-to-blockchain">From transaction pool to blo=
+ckchain</h3>
+<p>Let=E2=80=99s next implement a way for the unconfirmed transaction to fi=
+nd its way from the local transaction pool to a block mined by the same nod=
+e. This is simple: when a node starts to mine a block, it will include the =
+transactions from the transaction pool to the new block candidate.</p>
+
+<figure class=3D"highlight"><pre><code class=3D"language-ts" data-lang=3D"t=
+s"><span></span><span class=3D"kr">const</span> <span class=3D"nx">generate=
+NextBlock</span> <span class=3D"o">=3D</span> <span class=3D"p">()</span> <=
+span class=3D"o">=3D&gt;</span> <span class=3D"p">{</span>
+    <span class=3D"kr">const</span> <span class=3D"nx">coinbaseTx</span>: <=
+span class=3D"kt">Transaction</span> <span class=3D"o">=3D</span> <span cla=
+ss=3D"nx">getCoinbaseTransaction</span><span class=3D"p">(</span><span clas=
+s=3D"nx">getPublicFromWallet</span><span class=3D"p">(),</span> <span class=
+=3D"nx">getLatestBlock</span><span class=3D"p">().</span><span class=3D"nx"=
+>index</span> <span class=3D"o">+</span> <span class=3D"mi">1</span><span c=
+lass=3D"p">);</span>
+    <span class=3D"kr">const</span> <span class=3D"nx">blockData</span>: <s=
+pan class=3D"kt">Transaction</span><span class=3D"p">[]</span> <span class=
+=3D"o">=3D</span> <span class=3D"p">[</span><span class=3D"nx">coinbaseTx</=
+span><span class=3D"p">].</span><span class=3D"nx">concat</span><span class=
+=3D"p">(</span><span class=3D"nx">getTransactionPool</span><span class=3D"p=
+">());</span>
+    <span class=3D"k">return</span> <span class=3D"nx">generateRawNextBlock=
+</span><span class=3D"p">(</span><span class=3D"nx">blockData</span><span c=
+lass=3D"p">);</span>
+<span class=3D"p">};</span></code></pre></figure>
+
+<p>As the transactions are already validated, before they are added to the =
+pool, we are not doing any further validations at this points.</p>
+<h3 id=3D"updating-the-transaction-pool">Updating the transaction pool</h3>
+
+<p>As new blocks with transactions are mined to the blockchain, we must rev=
+alidate the transaction pool every time a new block is found. It is possibl=
+e that the new block contains transactions that makes some of the transacti=
+ons in the pool invalid. This can happen if for instance:</p>
+
+<ul>
+  <li>The transaction that was in the pool was mined (by the node itself or=
+ by someone else)</li>
+  <li>The unspent transaction output that is referred in the unconfirmed tr=
+ansaction is spent by some other transaction</li>
+</ul>
+
+<p>The transaction pool will be updated with the following code:</p>
+
+<figure class=3D"highlight"><pre><code class=3D"language-ts" data-lang=3D"t=
+s"><span></span><span class=3D"kr">const</span> <span class=3D"nx">updateTr=
+ansactionPool</span> <span class=3D"o">=3D</span> <span class=3D"p">(</span=
+><span class=3D"nx">unspentTxOuts</span>: <span class=3D"kt">UnspentTxOut</=
+span><span class=3D"p">[])</span> <span class=3D"o">=3D&gt;</span> <span cl=
+ass=3D"p">{</span>
+    <span class=3D"kr">const</span> <span class=3D"nx">invalidTxs</span> <s=
+pan class=3D"o">=3D</span> <span class=3D"p">[];</span>
+    <span class=3D"k">for</span> <span class=3D"p">(</span><span class=3D"k=
+r">const</span> <span class=3D"nx">tx</span> <span class=3D"nx">of</span> <=
+span class=3D"nx">transactionPool</span><span class=3D"p">)</span> <span cl=
+ass=3D"p">{</span>
+        <span class=3D"k">for</span> <span class=3D"p">(</span><span class=
+=3D"kr">const</span> <span class=3D"nx">txIn</span> <span class=3D"nx">of</=
+span> <span class=3D"nx">tx</span><span class=3D"p">.</span><span class=3D"=
+nx">txIns</span><span class=3D"p">)</span> <span class=3D"p">{</span>
+            <span class=3D"k">if</span> <span class=3D"p">(</span><span cla=
+ss=3D"o">!</span><span class=3D"nx">hasTxIn</span><span class=3D"p">(</span=
+><span class=3D"nx">txIn</span><span class=3D"p">,</span> <span class=3D"nx=
+">unspentTxOuts</span><span class=3D"p">))</span> <span class=3D"p">{</span=
+>
+                <span class=3D"nx">invalidTxs</span><span class=3D"p">.</sp=
+an><span class=3D"nx">push</span><span class=3D"p">(</span><span class=3D"n=
+x">tx</span><span class=3D"p">);</span>
+                <span class=3D"k">break</span><span class=3D"p">;</span>
+            <span class=3D"p">}</span>
+        <span class=3D"p">}</span>
+    <span class=3D"p">}</span>
+    <span class=3D"k">if</span> <span class=3D"p">(</span><span class=3D"nx=
+">invalidTxs</span><span class=3D"p">.</span><span class=3D"nx">length</spa=
+n> <span class=3D"o">&gt;</span> <span class=3D"mi">0</span><span class=3D"=
+p">)</span> <span class=3D"p">{</span>
+        <span class=3D"nx">console</span><span class=3D"p">.</span><span cl=
+ass=3D"nx">log</span><span class=3D"p">(</span><span class=3D"s1">'removing=
+ the following transactions from txPool: %s'</span><span class=3D"p">,</spa=
+n> <span class=3D"nx">JSON</span><span class=3D"p">.</span><span class=3D"n=
+x">stringify</span><span class=3D"p">(</span><span class=3D"nx">invalidTxs<=
+/span><span class=3D"p">));</span>
+        <span class=3D"nx">transactionPool</span> <span class=3D"o">=3D</sp=
+an> <span class=3D"nx">_</span><span class=3D"p">.</span><span class=3D"nx"=
+>without</span><span class=3D"p">(</span><span class=3D"nx">transactionPool=
+</span><span class=3D"p">,</span> <span class=3D"p">...</span><span class=
+=3D"nx">invalidTxs</span><span class=3D"p">)</span>
+    <span class=3D"p">}</span>
+<span class=3D"p">};</span></code></pre></figure>
+
+<p>As it can be seen, we need to know only the current unspent transaction =
+outputs to make the decision if a transaction should be removed from the po=
+ol.</p>
+
+<h3 id=3D"conclusions">Conclusions</h3>
+<p>We can now include transactions to the blockchain without actually havin=
+g to mine the blocks themselves. There is however no incentive for the node=
+s to include a received transaction to the block as we <strong>did not</str=
+ong> implement the concept of transaction fees.</p>
+
+<p>In the <a href=3D"https://lhartikk.github.io/jekyll/update/2017/07/09/ch=
+apter6.html">next chapter</a> we will create some UI for the wallet and a s=
+imple blockchain explorer.</p>
+
+<p><a href=3D"https://lhartikk.github.io/jekyll/update/2017/07/09/chapter6.=
+html">To chapter6</a></p>
+
+
+  </div>
+
+ =20
+</article>
+
+      </div>
+    </main>
+
+    <footer class=3D"site-footer">
+
+
+</footer>
+
+
+ =20
+
+
+</body></html>
+------MultipartBoundary--p1ehiEZvhBYolA2q3JZz8IrpGH3gy0ZWVQAZw0Hu3A----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://lhartikk.github.io/assets/main.css
+
+@charset "utf-8";
+
+body, h1, h2, h3, h4, h5, h6, p, blockquote, pre, hr, dl, dd, ol, ul, figur=
+e { margin: 0px; padding: 0px; }
+
+body { font: 400 16px / 1.5 "Helvetica Neue", Helvetica, Arial, sans-serif;=
+ color: rgb(17, 17, 17); background-color: rgb(253, 253, 253); text-size-ad=
+just: 100%; font-feature-settings: "kern"; font-kerning: normal; }
+
+h1, h2, h3, h4, h5, h6, p, blockquote, pre, ul, ol, dl, figure, .highlight =
+{ margin-bottom: 15px; }
+
+img { max-width: 100%; vertical-align: middle; }
+
+figure > img { display: block; }
+
+figcaption { font-size: 14px; }
+
+ul, ol { margin-left: 30px; }
+
+li > ul, li > ol { margin-bottom: 0px; }
+
+h1, h2, h3, h4, h5, h6 { font-weight: 400; }
+
+a { color: rgb(42, 122, 226); text-decoration: none; }
+
+a:visited { color: rgb(23, 86, 169); }
+
+a:hover { color: rgb(17, 17, 17); text-decoration: underline; }
+
+.social-media-list a:hover { text-decoration: none; }
+
+.social-media-list a:hover .username { text-decoration: underline; }
+
+blockquote { color: rgb(130, 130, 130); border-left: 4px solid rgb(232, 232=
+, 232); padding-left: 15px; font-size: 18px; letter-spacing: -1px; font-sty=
+le: italic; }
+
+blockquote > :last-child { margin-bottom: 0px; }
+
+pre, code { font-size: 15px; border: 1px solid rgb(232, 232, 232); border-r=
+adius: 3px; background-color: rgb(238, 238, 255); }
+
+code { padding: 1px 5px; }
+
+pre { padding: 8px 12px; overflow-x: auto; }
+
+pre > code { border: 0px; padding-right: 0px; padding-left: 0px; }
+
+.wrapper { max-width: calc(740px); margin-right: auto; margin-left: auto; p=
+adding-right: 30px; padding-left: 30px; }
+
+@media screen and (max-width: 800px) {
+  .wrapper { max-width: calc(770px); padding-right: 15px; padding-left: 15p=
+x; }
+}
+
+.wrapper::after, .footer-col-wrapper::after { content: ""; display: table; =
+clear: both; }
+
+.icon > svg { display: inline-block; vertical-align: middle; }
+
+.icon > svg path { fill: rgb(130, 130, 130); }
+
+.social-media-list .icon { padding-right: 5px; }
+
+.social-media-list li + li { padding-top: 5px; }
+
+.site-header { border-top: 5px solid rgb(66, 66, 66); border-bottom: 1px so=
+lid rgb(232, 232, 232); min-height: 55.95px; position: relative; }
+
+.site-title { font-size: 26px; font-weight: 300; line-height: 54px; letter-=
+spacing: -1px; margin-bottom: 0px; float: left; }
+
+.site-title, .site-title:visited { color: rgb(66, 66, 66); }
+
+.site-nav { float: right; line-height: 54px; }
+
+.site-nav .nav-trigger { display: none; }
+
+.site-nav .menu-icon { display: none; }
+
+.site-nav .page-link { color: rgb(17, 17, 17); line-height: 1.5; }
+
+.site-nav .page-link:not(:last-child) { margin-right: 20px; }
+
+@media screen and (max-width: 600px) {
+  .site-nav { position: absolute; top: 9px; right: 15px; background-color: =
+rgb(253, 253, 253); border: 1px solid rgb(232, 232, 232); border-radius: 5p=
+x; text-align: right; }
+  .site-nav label[for=3D"nav-trigger"] { display: block; float: right; widt=
+h: 36px; height: 36px; z-index: 2; cursor: pointer; }
+  .site-nav .menu-icon { display: block; float: right; width: 36px; height:=
+ 26px; line-height: 0; padding-top: 10px; text-align: center; }
+  .site-nav .menu-icon > svg path { fill: rgb(66, 66, 66); }
+  .site-nav input ~ .trigger { clear: both; display: none; }
+  .site-nav input:checked ~ .trigger { display: block; padding-bottom: 5px;=
+ }
+  .site-nav .page-link { display: block; padding: 5px 10px; margin-left: 20=
+px; }
+  .site-nav .page-link:not(:last-child) { margin-right: 0px; }
+}
+
+.site-footer { border-top: 1px solid rgb(232, 232, 232); padding: 30px 0px;=
+ }
+
+.footer-heading { font-size: 18px; margin-bottom: 15px; }
+
+.contact-list, .social-media-list { list-style: none; margin-left: 0px; }
+
+.footer-col-wrapper { font-size: 15px; color: rgb(130, 130, 130); margin-le=
+ft: -15px; }
+
+.footer-col { float: left; margin-bottom: 15px; padding-left: 15px; }
+
+.footer-col-1 { width: calc(35% - 15px); }
+
+.footer-col-2 { width: calc(20% - 15px); }
+
+.footer-col-3 { width: calc(45% - 15px); }
+
+@media screen and (max-width: 800px) {
+  .footer-col-1, .footer-col-2 { width: calc(50% - 15px); }
+  .footer-col-3 { width: calc(100% - 15px); }
+}
+
+@media screen and (max-width: 600px) {
+  .footer-col { float: none; width: calc(100% - 15px); }
+}
+
+.page-content { padding: 30px 0px; }
+
+.page-heading { font-size: 20px; }
+
+.post-list { margin-left: 0px; list-style: none; }
+
+.post-list > li { margin-bottom: 30px; }
+
+.post-meta { font-size: 14px; color: rgb(130, 130, 130); }
+
+.post-link { display: block; font-size: 24px; }
+
+.post-header { margin-bottom: 30px; }
+
+.post-title { font-size: 42px; letter-spacing: -1px; line-height: 1; }
+
+@media screen and (max-width: 800px) {
+  .post-title { font-size: 36px; }
+}
+
+.post-content { margin-bottom: 30px; }
+
+.post-content h2 { font-size: 32px; }
+
+@media screen and (max-width: 800px) {
+  .post-content h2 { font-size: 28px; }
+}
+
+.post-content h3 { font-size: 26px; }
+
+@media screen and (max-width: 800px) {
+  .post-content h3 { font-size: 22px; }
+}
+
+.post-content h4 { font-size: 20px; }
+
+@media screen and (max-width: 800px) {
+  .post-content h4 { font-size: 18px; }
+}
+
+.highlight { background: rgb(255, 255, 255); }
+
+.highlighter-rouge .highlight { background: rgb(238, 238, 255); }
+
+.highlight .c { color: rgb(153, 153, 136); font-style: italic; }
+
+.highlight .err { color: rgb(166, 23, 23); background-color: rgb(227, 210, =
+210); }
+
+.highlight .k { font-weight: bold; }
+
+.highlight .o { font-weight: bold; }
+
+.highlight .cm { color: rgb(153, 153, 136); font-style: italic; }
+
+.highlight .cp { color: rgb(153, 153, 153); font-weight: bold; }
+
+.highlight .c1 { color: rgb(153, 153, 136); font-style: italic; }
+
+.highlight .cs { color: rgb(153, 153, 153); font-weight: bold; font-style: =
+italic; }
+
+.highlight .gd { color: rgb(0, 0, 0); background-color: rgb(255, 221, 221);=
+ }
+
+.highlight .gd .x { color: rgb(0, 0, 0); background-color: rgb(255, 170, 17=
+0); }
+
+.highlight .ge { font-style: italic; }
+
+.highlight .gr { color: rgb(170, 0, 0); }
+
+.highlight .gh { color: rgb(153, 153, 153); }
+
+.highlight .gi { color: rgb(0, 0, 0); background-color: rgb(221, 255, 221);=
+ }
+
+.highlight .gi .x { color: rgb(0, 0, 0); background-color: rgb(170, 255, 17=
+0); }
+
+.highlight .go { color: rgb(136, 136, 136); }
+
+.highlight .gp { color: rgb(85, 85, 85); }
+
+.highlight .gs { font-weight: bold; }
+
+.highlight .gu { color: rgb(170, 170, 170); }
+
+.highlight .gt { color: rgb(170, 0, 0); }
+
+.highlight .kc { font-weight: bold; }
+
+.highlight .kd { font-weight: bold; }
+
+.highlight .kp { font-weight: bold; }
+
+.highlight .kr { font-weight: bold; }
+
+.highlight .kt { color: rgb(68, 85, 136); font-weight: bold; }
+
+.highlight .m { color: rgb(0, 153, 153); }
+
+.highlight .s { color: rgb(221, 17, 68); }
+
+.highlight .na { color: rgb(0, 128, 128); }
+
+.highlight .nb { color: rgb(0, 134, 179); }
+
+.highlight .nc { color: rgb(68, 85, 136); font-weight: bold; }
+
+.highlight .no { color: rgb(0, 128, 128); }
+
+.highlight .ni { color: rgb(128, 0, 128); }
+
+.highlight .ne { color: rgb(153, 0, 0); font-weight: bold; }
+
+.highlight .nf { color: rgb(153, 0, 0); font-weight: bold; }
+
+.highlight .nn { color: rgb(85, 85, 85); }
+
+.highlight .nt { color: rgb(0, 0, 128); }
+
+.highlight .nv { color: rgb(0, 128, 128); }
+
+.highlight .ow { font-weight: bold; }
+
+.highlight .w { color: rgb(187, 187, 187); }
+
+.highlight .mf { color: rgb(0, 153, 153); }
+
+.highlight .mh { color: rgb(0, 153, 153); }
+
+.highlight .mi { color: rgb(0, 153, 153); }
+
+.highlight .mo { color: rgb(0, 153, 153); }
+
+.highlight .sb { color: rgb(221, 17, 68); }
+
+.highlight .sc { color: rgb(221, 17, 68); }
+
+.highlight .sd { color: rgb(221, 17, 68); }
+
+.highlight .s2 { color: rgb(221, 17, 68); }
+
+.highlight .se { color: rgb(221, 17, 68); }
+
+.highlight .sh { color: rgb(221, 17, 68); }
+
+.highlight .si { color: rgb(221, 17, 68); }
+
+.highlight .sx { color: rgb(221, 17, 68); }
+
+.highlight .sr { color: rgb(0, 153, 38); }
+
+.highlight .s1 { color: rgb(221, 17, 68); }
+
+.highlight .ss { color: rgb(153, 0, 115); }
+
+.highlight .bp { color: rgb(153, 153, 153); }
+
+.highlight .vc { color: rgb(0, 128, 128); }
+
+.highlight .vg { color: rgb(0, 128, 128); }
+
+.highlight .vi { color: rgb(0, 128, 128); }
+
+.highlight .il { color: rgb(0, 153, 153); }
+------MultipartBoundary--p1ehiEZvhBYolA2q3JZz8IrpGH3gy0ZWVQAZw0Hu3A------
